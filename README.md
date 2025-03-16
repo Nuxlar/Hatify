@@ -1,6 +1,6 @@
 # Hatify
 
-Adds hats to every vanilla survivor except MUL-T since he has a hard hat, Bandit since he has a hat (except for the SOTS skin), and REX since plants can't wear hats.
+Adds hats to every vanilla survivor except MUL-T since he has a hard hat, Bandit since he has a hat (except for the SOTS skin), and REX since plants can't wear hats. Setting the config to 0 prevents the hat from being added to that survivor.
 
 <img src="https://i.ibb.co/JxbLkCR/aHatify.png" alt="aHatify" border="0">
 <img src="https://i.ibb.co/72Z39WY/cHatify.png" alt="cHatify" border="0">
@@ -11,23 +11,3 @@ Adds hats to every vanilla survivor except MUL-T since he has a hard hat, Bandit
 <img src="https://i.ibb.co/XYwvtcT/vHatify.png" alt="vHatify" border="0">
 <img src="https://i.ibb.co/JtdDS8K/lHatify.png" alt="lHatify" border="0">
 <img src="https://i.ibb.co/64jThMW/eHatify.png" alt="eHatify" border="0">
-
-## Changelog
-
-**1.0.3**
-
-- Adds a config for hat sizes (setting it to 0 would make the hat 'invisible')
-
-**1.0.2**
-
-- Updated for SOTS
-- Adds a hat to bandit's sots skin (i can't believe they removed his hat)
-- Adds a hat to captain
-
-**1.0.1**
-
-- Removes debug log
-
-**1.0.0**
-
-- Release

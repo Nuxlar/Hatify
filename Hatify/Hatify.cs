@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 namespace Hatify
 {
-  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.0.3")]
+  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.1.0")]
 
   public class Hatify : BaseUnityPlugin
   {
@@ -59,385 +59,158 @@ namespace Hatify
       self.StartCoroutine(this.HatifyThese(self));
     }
 
+    private void SetupHat(GameObject hat, CharacterModel model, Vector3 size, Vector3 localPos, Vector3 rotation)
+    {
+      Material mat = model.body.name == "Bandit2Body(Clone)" ? this.banditHatMat : this.hatMat;
+      gameObject.AddComponent<NetworkIdentity>();
+      gameObject.transform.localScale = size;
+      gameObject.transform.localPosition = localPos;
+      gameObject.transform.Rotate(rotation);
+      gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = mat;
+      List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
+      Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
+      for (int index = 0; index < rendererArray.Length; ++index)
+      {
+        Renderer renderer = rendererArray[index];
+        rendererInfos.Add(new CharacterModel.RendererInfo()
+        {
+          renderer = renderer,
+          defaultMaterial = renderer.sharedMaterial,
+          defaultShadowCastingMode = renderer.shadowCastingMode,
+          hideOnDeath = false,
+          ignoreOverlays = false
+        });
+        renderer = (Renderer)null;
+      }
+      rendererArray = (Renderer[])null;
+      model.baseRendererInfos = rendererInfos.ToArray();
+      rendererInfos = (List<CharacterModel.RendererInfo>)null;
+    }
+
     private IEnumerator HatifyThese(CharacterModel model)
     {
       yield return new WaitForFixedUpdate();
       if ((bool)model.body)
       {
-        if (model.body.name == "Bandit2Body(Clone)")
+        GameObject hatObject = null;
+        Vector3 hatSize = Vector3.zero;
+        switch (model.body.name)
         {
-          if (model.GetComponent<ModelSkinController>().currentSkinIndex == 2)
-          {
-            GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2));
-            gameObject.AddComponent<NetworkIdentity>();
-            gameObject.transform.localScale = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
-            gameObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
-            gameObject.transform.Rotate(new Vector3(10f, 0.0f, 0.0f));
-            gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.banditHatMat;
-            List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-            Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-            for (int index = 0; index < rendererArray.Length; ++index)
+          case "Bandit2Body(Clone)":
+            if (model.GetComponent<ModelSkinController>().currentSkinIndex == 2)
             {
-              Renderer renderer = rendererArray[index];
-              rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatSize = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
+              if (hatSize != Vector3.zero)
               {
-                renderer = renderer,
-                defaultMaterial = renderer.sharedMaterial,
-                defaultShadowCastingMode = renderer.shadowCastingMode,
-                hideOnDeath = false,
-                ignoreOverlays = false
-              });
-              renderer = (Renderer)null;
+                hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2));
+                SetupHat(hatObject, model, new Vector3(banditSize.Value, banditSize.Value, banditSize.Value), new Vector3(0f, 0.15f, 0f), new Vector3(10f, 0.0f, 0.0f));
+              }
             }
-            rendererArray = (Renderer[])null;
-            model.baseRendererInfos = rendererInfos.ToArray();
-            gameObject = (GameObject)null;
-            rendererInfos = (List<CharacterModel.RendererInfo>)null;
-          }
-        }
-        else if (model.body.name == "CaptainBody(Clone)")
-        {
-          {
-            Transform captainHead = model.transform.GetChild(1).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0);
-            Transform captainHat = captainHead.Find("CaptainHat");
-            if (captainHat)
+            break;
+          case "CaptainBody(Clone)":
+            hatSize = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              captainHat.gameObject.SetActive(false);
-            }
-            GameObject gameObject = Object.Instantiate<GameObject>(this.hat, captainHead);
-            gameObject.AddComponent<NetworkIdentity>();
-            gameObject.transform.localScale = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
-            gameObject.transform.localPosition = new Vector3(0f, 0.15f, 0);
-            gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-            gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-            List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-            Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-            for (int index = 0; index < rendererArray.Length; ++index)
-            {
-              Renderer renderer = rendererArray[index];
-              rendererInfos.Add(new CharacterModel.RendererInfo()
+              Transform captainHead = model.transform.GetChild(1).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0);
+              Transform captainHat = captainHead.Find("CaptainHat");
+              if (captainHat)
               {
-                renderer = renderer,
-                defaultMaterial = renderer.sharedMaterial,
-                defaultShadowCastingMode = renderer.shadowCastingMode,
-                hideOnDeath = false,
-                ignoreOverlays = false
-              });
-              renderer = (Renderer)null;
+                captainHat.gameObject.SetActive(false);
+              }
+              hatObject = Object.Instantiate<GameObject>(this.hat, captainHead);
+              SetupHat(hatObject, model, hatSize, new Vector3(0f, 0.15f, 0), new Vector3(15f, 0.0f, 0.0f));
             }
-            rendererArray = (Renderer[])null;
-            model.baseRendererInfos = rendererInfos.ToArray();
-            gameObject = (GameObject)null;
-            rendererInfos = (List<CharacterModel.RendererInfo>)null;
-          }
-        }
-        else if (model.body.name == "CommandoBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(3).GetChild(0).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+            break;
+          case "CommandoBody(Clone)":
+            hatSize = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "RailgunnerBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(1).GetChild(2).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.175f, -0.025f);
-          gameObject.transform.Rotate(new Vector3(30f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(3).GetChild(0).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "RailgunnerBody(Clone)":
+            hatSize = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "MageBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(2).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.15f, -0.1f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(1).GetChild(2).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.175f, -0.025f), new Vector3(30f, 0.0f, 0.0f));
+            }
+            break;
+          case "MageBody(Clone)":
+            hatSize = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "HuntressBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(2).GetChild(3).GetChild(0).GetChild(2).GetChild(0).GetChild(1));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.3f, -0.05f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(2).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.15f, -0.1f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "HuntressBody(Clone)":
+            hatSize = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "CrocoBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0).GetChild(0).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0f, 1.6f);
-          gameObject.transform.Rotate(new Vector3(55f, 180f, 180f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(2).GetChild(3).GetChild(0).GetChild(2).GetChild(0).GetChild(1));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, -0.05f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "CrocoBody(Clone)":
+            hatSize = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "EngiBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.65f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0).GetChild(0).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0f, 1.6f), new Vector3(55f, 180f, 180f));
+            }
+            break;
+          case "EngiBody(Clone)":
+            hatSize = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "EngiWalkerTurretBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 1f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.65f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "EngiWalkerTurretBody(Clone)":
+            hatSize = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "EngiTurretBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 1f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "EngiTurretBody(Clone)":
+            hatSize = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "MercBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(3).GetChild(1));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "MercBody(Clone)":
+            hatSize = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "VoidSurvivorBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(7).GetChild(0).GetChild(0).GetChild(1).GetChild(2).GetChild(2).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.1f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(3).GetChild(1));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.2f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "VoidSurvivorBody(Clone)":
+            hatSize = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
-        }
-        else if (model.body.name == "LoaderBody(Clone)")
-        {
-          GameObject gameObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(5).GetChild(0).GetChild(3).GetChild(0));
-          gameObject.AddComponent<NetworkIdentity>();
-          gameObject.transform.localScale = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
-          gameObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
-          gameObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
-          gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = this.hatMat;
-          List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-          Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
-          for (int index = 0; index < rendererArray.Length; ++index)
-          {
-            Renderer renderer = rendererArray[index];
-            rendererInfos.Add(new CharacterModel.RendererInfo()
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(7).GetChild(0).GetChild(0).GetChild(1).GetChild(2).GetChild(2).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.1f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          case "LoaderBody(Clone)":
+            hatSize = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
+            if (hatSize != Vector3.zero)
             {
-              renderer = renderer,
-              defaultMaterial = renderer.sharedMaterial,
-              defaultShadowCastingMode = renderer.shadowCastingMode,
-              hideOnDeath = false,
-              ignoreOverlays = false
-            });
-            renderer = (Renderer)null;
-          }
-          rendererArray = (Renderer[])null;
-          model.baseRendererInfos = rendererInfos.ToArray();
-          gameObject = (GameObject)null;
-          rendererInfos = (List<CharacterModel.RendererInfo>)null;
+              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(5).GetChild(0).GetChild(3).GetChild(0));
+              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.2f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
+            }
+            break;
+          default:
+            break;
         }
       }
     }
