@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 
 namespace Hatify
 {
-  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.1.0")]
+  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.1.1")]
 
   public class Hatify : BaseUnityPlugin
   {
@@ -62,13 +62,13 @@ namespace Hatify
     private void SetupHat(GameObject hat, CharacterModel model, Vector3 size, Vector3 localPos, Vector3 rotation)
     {
       Material mat = model.body.name == "Bandit2Body(Clone)" ? this.banditHatMat : this.hatMat;
-      gameObject.AddComponent<NetworkIdentity>();
-      gameObject.transform.localScale = size;
-      gameObject.transform.localPosition = localPos;
-      gameObject.transform.Rotate(rotation);
-      gameObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = mat;
+      hat.AddComponent<NetworkIdentity>();
+      hat.transform.localScale = size;
+      hat.transform.localPosition = localPos;
+      hat.transform.Rotate(rotation);
+      hat.transform.GetChild(0).GetComponent<MeshRenderer>().material = mat;
       List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-      Renderer[] rendererArray = gameObject.GetComponentsInChildren<Renderer>();
+      Renderer[] rendererArray = hat.GetComponentsInChildren<Renderer>();
       for (int index = 0; index < rendererArray.Length; ++index)
       {
         Renderer renderer = rendererArray[index];

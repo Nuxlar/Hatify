@@ -1,3 +1,7 @@
+**1.1.1**
+
+- Fixes hats not hatting properly
+
 **1.1.0**
 
 - Refactors code (cleaner, more efficient)

@@ -1,6 +1,6 @@
 ﻿{
   "name": "Hatify",
-  "version_number": "1.1.0",
+  "version_number": "1.1.1",
   "website_url": "https://github.com/Nuxlar/Hatify/issues",
   "description": "Adds a hat to most vanilla survivors. Size Configurable.",
   "dependencies": [
