@@ -1,22 +1,38 @@
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+using static BodyModelAdditionsAPI.Main;
 using BepInEx;
 using BepInEx.Configuration;
 using RoR2;
+using RoR2.ContentManagement;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace Hatify
 {
-  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.1.1")]
+  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.2.0")]
 
   public class Hatify : BaseUnityPlugin
   {
-    private Material hatMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/Commando/matCommandoDualies.mat").WaitForCompletion();
-    private GameObject hat = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Bandit2/mdlBandit2.fbx").WaitForCompletion().transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2).GetChild(0).gameObject;
-    private Material banditHatMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/Bandit2/matBandit2AltColossus.mat").WaitForCompletion();
+    private static Material hatMat;
+    private static Material banditHatMat;
+    private static List<string> bodyNames = new List<string>()
+    {
+      "Bandit2Body",
+      "CaptainBody",
+      "CommandoBody",
+      "RailgunnerBody",
+      "MageBody",
+      "HuntressBody",
+      "CrocoBody",
+      "MercBody",
+      "VoidSurvivorBody",
+      "EngiBody",
+      "EngiTurretBody",
+      "EngiWalkerTurretBody",
+      "LoaderBody"
+    };
 
     public static ConfigEntry<float> commandoSize;
     public static ConfigEntry<float> banditSize;
@@ -50,169 +66,308 @@ namespace Hatify
       railgunnerSize = HatifyConfig.Bind<float>("General", "Railgunner Hat Size", 1f, "The scale of the hat.");
       fiendSize = HatifyConfig.Bind<float>("General", "Fiend Hat Size", 1.4f, "The scale of the hat.");
 
-      On.RoR2.CharacterModel.Start += CharacterModel_Start;
+      LoadAssets();
     }
 
-    private void CharacterModel_Start(On.RoR2.CharacterModel.orig_Start orig, CharacterModel self)
+    private static void LoadAssets()
     {
-      orig(self);
-      self.StartCoroutine(this.HatifyThese(self));
-    }
+      AssetReferenceT<Material> hatMatRef = new AssetReferenceT<Material>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Commando.matCommandoDualies_mat);
+      AssetAsyncReferenceManager<Material>.LoadAsset(hatMatRef).Completed += (x) => hatMat = x.Result;
 
-    private void SetupHat(GameObject hat, CharacterModel model, Vector3 size, Vector3 localPos, Vector3 rotation)
-    {
-      Material mat = model.body.name == "Bandit2Body(Clone)" ? this.banditHatMat : this.hatMat;
-      hat.AddComponent<NetworkIdentity>();
-      hat.transform.localScale = size;
-      hat.transform.localPosition = localPos;
-      hat.transform.Rotate(rotation);
-      hat.transform.GetChild(0).GetComponent<MeshRenderer>().material = mat;
-      List<CharacterModel.RendererInfo> rendererInfos = ((IEnumerable<CharacterModel.RendererInfo>)model.baseRendererInfos).ToList<CharacterModel.RendererInfo>();
-      Renderer[] rendererArray = hat.GetComponentsInChildren<Renderer>();
-      for (int index = 0; index < rendererArray.Length; ++index)
+      AssetReferenceT<Material> banditHatMatRef = new AssetReferenceT<Material>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Bandit2.matBandit2AltColossus_mat);
+      AssetAsyncReferenceManager<Material>.LoadAsset(banditHatMatRef).Completed += (x) => banditHatMat = x.Result;
+
+      AssetReferenceT<GameObject> hatRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Bandit2.mdlBandit2_fbx);
+      AssetAsyncReferenceManager<GameObject>.LoadAsset(hatRef).Completed += (x) =>
       {
-        Renderer renderer = rendererArray[index];
-        rendererInfos.Add(new CharacterModel.RendererInfo()
-        {
-          renderer = renderer,
-          defaultMaterial = renderer.sharedMaterial,
-          defaultShadowCastingMode = renderer.shadowCastingMode,
-          hideOnDeath = false,
-          ignoreOverlays = false
-        });
-        renderer = (Renderer)null;
-      }
-      rendererArray = (Renderer[])null;
-      model.baseRendererInfos = rendererInfos.ToArray();
-      rendererInfos = (List<CharacterModel.RendererInfo>)null;
-    }
+        GameObject actualHat = x.Result.transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2).GetChild(0).gameObject;
+        actualHat.AddComponent<NetworkIdentity>();
 
-    private IEnumerator HatifyThese(CharacterModel model)
-    {
-      yield return new WaitForFixedUpdate();
-      if ((bool)model.body)
-      {
-        GameObject hatObject = null;
-        Vector3 hatSize = Vector3.zero;
-        switch (model.body.name)
+        foreach (string bodyName in bodyNames)
         {
-          case "Bandit2Body(Clone)":
-            if (model.GetComponent<ModelSkinController>().currentSkinIndex == 2)
-            {
+          Vector3 hatSize = Vector3.zero;
+
+          switch (bodyName)
+          {
+            case "Bandit2Body":
               hatSize = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
               if (hatSize != Vector3.zero)
               {
-                hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2));
-                SetupHat(hatObject, model, new Vector3(banditSize.Value, banditSize.Value, banditSize.Value), new Vector3(0f, 0.15f, 0f), new Vector3(10f, 0.0f, 0.0f));
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItBandit,
+                };
+                new ModelPart(modelPartInfo);
               }
-            }
-            break;
-          case "CaptainBody(Clone)":
-            hatSize = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              Transform captainHead = model.transform.GetChild(1).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0);
-              Transform captainHat = captainHead.Find("CaptainHat");
-              if (captainHat)
+              break;
+            case "CaptainBody":
+              hatSize = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
+              if (hatSize != Vector3.zero)
               {
-                captainHat.gameObject.SetActive(false);
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItCaptain,
+                };
+                new ModelPart(modelPartInfo);
               }
-              hatObject = Object.Instantiate<GameObject>(this.hat, captainHead);
-              SetupHat(hatObject, model, hatSize, new Vector3(0f, 0.15f, 0), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "CommandoBody(Clone)":
-            hatSize = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(3).GetChild(0).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "RailgunnerBody(Clone)":
-            hatSize = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(1).GetChild(2).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.175f, -0.025f), new Vector3(30f, 0.0f, 0.0f));
-            }
-            break;
-          case "MageBody(Clone)":
-            hatSize = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(2).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.15f, -0.1f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "HuntressBody(Clone)":
-            hatSize = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(2).GetChild(3).GetChild(0).GetChild(2).GetChild(0).GetChild(1));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, -0.05f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "CrocoBody(Clone)":
-            hatSize = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(5).GetChild(0).GetChild(0).GetChild(2).GetChild(0).GetChild(2).GetChild(0).GetChild(0).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0f, 1.6f), new Vector3(55f, 180f, 180f));
-            }
-            break;
-          case "EngiBody(Clone)":
-            hatSize = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.65f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "EngiWalkerTurretBody(Clone)":
-            hatSize = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 1f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "EngiTurretBody(Clone)":
-            hatSize = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(1).GetChild(0).GetChild(4).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.3f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "MercBody(Clone)":
-            hatSize = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(2).GetChild(0).GetChild(3).GetChild(0).GetChild(3).GetChild(1));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.2f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "VoidSurvivorBody(Clone)":
-            hatSize = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(7).GetChild(0).GetChild(0).GetChild(1).GetChild(2).GetChild(2).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.1f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          case "LoaderBody(Clone)":
-            hatSize = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
-            if (hatSize != Vector3.zero)
-            {
-              hatObject = Object.Instantiate<GameObject>(this.hat, model.transform.GetChild(0).GetChild(0).GetChild(0).GetChild(5).GetChild(0).GetChild(3).GetChild(0));
-              SetupHat(hatObject, model, hatSize, new Vector3(0.0f, 0.2f, 0.0f), new Vector3(15f, 0.0f, 0.0f));
-            }
-            break;
-          default:
-            break;
+              break;
+            case "CommandoBody":
+              hatSize = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItCommando,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "RailgunnerBody":
+              hatSize = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItRailgunner,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "MageBody":
+              hatSize = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItMage,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "HuntressBody":
+              hatSize = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItHuntress,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "CrocoBody":
+              hatSize = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItCroco,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "EngiBody":
+              hatSize = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Chest",
+                  codeAfterApplying = PlaceItEngi,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "EngiWalkerTurretBody":
+              hatSize = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItEngiWalker,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "EngiTurretBody":
+              hatSize = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItEngiTurret,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "MercBody":
+              hatSize = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItMerc,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "VoidSurvivorBody":
+              hatSize = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItVoid,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            case "LoaderBody":
+              hatSize = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
+              if (hatSize != Vector3.zero)
+              {
+                ModelPartInfo modelPartInfo = new ModelPartInfo
+                {
+                  bodyName = bodyName,
+                  gameObject = actualHat,
+                  inputString = "Head",
+                  codeAfterApplying = PlaceItLoader,
+                };
+                new ModelPart(modelPartInfo);
+              }
+              break;
+            default:
+              break;
+          }
         }
-      }
+      };
+    }
+
+    static void PlaceItBandit(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+      modelObject.transform.localScale = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
+      modelObject.transform.Rotate(new Vector3(10f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = banditHatMat;
+    }
+    static void PlaceItCaptain(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+      modelObject.transform.localScale = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItCommando(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
+      modelObject.transform.localScale = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItRailgunner(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.175f, -0.025f);
+      modelObject.transform.localScale = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
+      modelObject.transform.Rotate(new Vector3(30f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItMage(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.15f, -0.1f);
+      modelObject.transform.localScale = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItHuntress(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, -0.05f);
+      modelObject.transform.localScale = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItCroco(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0f, 1.6f);
+      modelObject.transform.localScale = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
+      modelObject.transform.Rotate(new Vector3(55f, 180f, 180f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItEngi(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.65f, 0.0f);
+      modelObject.transform.localScale = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItEngiWalker(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 1f, 0.0f);
+      modelObject.transform.localScale = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItEngiTurret(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
+      modelObject.transform.localScale = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItMerc(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
+      modelObject.transform.localScale = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItVoid(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.1f, 0.0f);
+      modelObject.transform.localScale = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
+    }
+    static void PlaceItLoader(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
+      modelObject.transform.localScale = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
+      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
   }
 }
