@@ -1,17 +1,8 @@
 # Hatify
 
-Adds hats to every vanilla survivor except MUL-T since he has a hard hat, Bandit since he has a hat (except for the SOTS skin), and REX since plants can't wear hats. Setting the config to 0 prevents the hat from being added to that survivor.
+Adds hats to every vanilla survivor and their modded skins except for some specific skins. Setting the config to 0 prevents the hat from being added to that survivor. No hats on these skins: Bandit (base), Bandit (alt), Bandit (modded), Chef (base), and Chef (modded)
 
-<img src="https://i.ibb.co/JxbLkCR/aHatify.png" alt="aHatify" border="0">
-<img src="https://i.ibb.co/72Z39WY/cHatify.png" alt="cHatify" border="0">
-<img src="https://i.ibb.co/ChGwtNJ/hHatify.png" alt="hHatify" border="0">
-<img src="https://i.ibb.co/17MLMsG/mer-Hatify.png" alt="mer-Hatify" border="0">
-<img src="https://i.ibb.co/wKBc0M0/mHatify.png" alt="mHatify" border="0">
-<img src="https://i.ibb.co/qJjZdY5/rHatify.png" alt="rHatify" border="0">
-<img src="https://i.ibb.co/XYwvtcT/vHatify.png" alt="vHatify" border="0">
-<img src="https://i.ibb.co/JtdDS8K/lHatify.png" alt="lHatify" border="0">
-<img src="https://i.ibb.co/64jThMW/eHatify.png" alt="eHatify" border="0">
-
+<img src="https://i.ibb.co/Hf1JZHjx/chef.png" alt="chefHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/yBgZbB0M/seeker.png" alt="seekerHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/wFYFWtkR/mult.png" alt="multHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/XTh0QtJ/rex.png" alt="rexHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/pjPHrrzM/fs.png" alt="fsHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/JxbLkCR/aHatify.png" alt="aHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/72Z39WY/cHatify.png" alt="cHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/ChGwtNJ/hHatify.png" alt="hHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/17MLMsG/mer-Hatify.png" alt="mer-Hatify" border="0" height="300" width="300"><img src="https://i.ibb.co/wKBc0M0/mHatify.png" alt="mHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/qJjZdY5/rHatify.png" alt="rHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/XYwvtcT/vHatify.png" alt="vHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/JtdDS8K/lHatify.png" alt="lHatify" border="0" height="300" width="300"><img src="https://i.ibb.co/64jThMW/eHatify.png" alt="eHatify" border="0" height="300" width="300">
 
 ## Credits
 

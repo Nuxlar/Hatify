@@ -1,3 +1,10 @@
+**1.3.0**
+
+- Adds hats to False Son, Seeker, REX, CHEF, and MUL-T
+- Fixes Captain's original hat not being removed
+- Fixes hats being applied to bandit's other skins
+- Slightly raises Railgunner's hat
+
 **1.2.0**
 
 - Fixed for Memory Optimization Update
