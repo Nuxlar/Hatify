@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Hatify
 {
-  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.3.0")]
+  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.3.1")]
 
   public class Hatify : BaseUnityPlugin
   {
@@ -370,7 +370,7 @@ namespace Hatify
     {
       modelObject.transform.localPosition = new Vector3(0f, 1.5f, 1.7f);
       modelObject.transform.localScale = new Vector3(multSize.Value, multSize.Value, multSize.Value);
-      modelObject.transform.Rotate(new Vector3(315f, 180f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(315f, 180f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItChef(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
@@ -381,14 +381,14 @@ namespace Hatify
 
       modelObject.transform.localPosition = new Vector3(-0.35f, 0f, 0f);
       modelObject.transform.localScale = new Vector3(chefSize.Value, chefSize.Value, chefSize.Value);
-      modelObject.transform.Rotate(new Vector3(60f, 90f, 180f));
+      modelObject.transform.localEulerAngles = new Vector3(60f, 90f, 180f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItFalseSon(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0f, 0.34f, -0.05f);
       modelObject.transform.localScale = new Vector3(falseSonSize.Value, falseSonSize.Value, falseSonSize.Value);
-      modelObject.transform.Rotate(new Vector3(10f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(10f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItSeeker(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
@@ -401,14 +401,14 @@ namespace Hatify
     {
       modelObject.transform.localPosition = new Vector3(0f, 2f, 0f);
       modelObject.transform.localScale = new Vector3(rexSize.Value, rexSize.Value, rexSize.Value);
-      modelObject.transform.Rotate(new Vector3(10f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(10f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItBandit(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
       modelObject.transform.localScale = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
-      modelObject.transform.Rotate(new Vector3(10f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(10f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = banditHatMat;
     }
     static void PlaceItCaptain(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
@@ -422,84 +422,84 @@ namespace Hatify
       }
       modelObject.transform.localPosition = new Vector3(0f, 0.15f, 0f);
       modelObject.transform.localScale = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItCommando(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
       modelObject.transform.localScale = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItRailgunner(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.18f, -0.025f);
       modelObject.transform.localScale = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
-      modelObject.transform.Rotate(new Vector3(30f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(30f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItMage(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.15f, -0.1f);
       modelObject.transform.localScale = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItHuntress(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, -0.05f);
       modelObject.transform.localScale = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItCroco(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0f, 1.6f);
       modelObject.transform.localScale = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
-      modelObject.transform.Rotate(new Vector3(55f, 180f, 180f));
+      modelObject.transform.localEulerAngles = new Vector3(55f, 180f, 180f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItEngi(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.65f, 0.0f);
       modelObject.transform.localScale = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItEngiWalker(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 1f, 0.0f);
       modelObject.transform.localScale = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItEngiTurret(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.3f, 0.0f);
       modelObject.transform.localScale = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItMerc(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
       modelObject.transform.localScale = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItVoid(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.1f, 0.0f);
       modelObject.transform.localScale = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
     static void PlaceItLoader(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0.0f, 0.2f, 0.0f);
       modelObject.transform.localScale = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
-      modelObject.transform.Rotate(new Vector3(15f, 0.0f, 0.0f));
+      modelObject.transform.localEulerAngles = new Vector3(15f, 0.0f, 0.0f);
       modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = hatMat;
     }
   }

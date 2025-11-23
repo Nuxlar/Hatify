@@ -1,3 +1,8 @@
+**1.3.1**
+
+- Updated for Alloyed Collective
+- Fixed hats not being rotated properly
+
 **1.3.0**
 
 - Adds hats to False Son, Seeker, REX, CHEF, and MUL-T
