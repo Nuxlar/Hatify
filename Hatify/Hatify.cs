@@ -2,7 +2,6 @@ using static BodyModelAdditionsAPI.Main;
 using BepInEx;
 using BepInEx.Configuration;
 using RoR2;
-using RoR2.ContentManagement;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
@@ -10,12 +9,14 @@ using System.Collections.Generic;
 
 namespace Hatify
 {
-  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.3.1")]
+  [BepInPlugin("com.Nuxlar.Hatify", "Hatify", "1.3.2")]
 
   public class Hatify : BaseUnityPlugin
   {
-    private static Material hatMat;
-    private static Material banditHatMat;
+    private static GameObject hat = Addressables.LoadAssetAsync<GameObject>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_Base_Bandit2.mdlBandit2_fbx).WaitForCompletion().transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2).GetChild(0).gameObject;
+    private static Material hatMat = Addressables.LoadAssetAsync<Material>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_Base_Commando.matCommandoDualies_mat).WaitForCompletion();
+    private static Material banditHatMat = Addressables.LoadAssetAsync<Material>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_Base_Bandit2.matBandit2AltColossus_mat).WaitForCompletion();
+    private static Material voidlingHatMat = Addressables.LoadAssetAsync<Material>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_DLC1_voidraid.matVoidMetalTrimGrassyVertexColorsOnlyRaidBoss_mat).WaitForCompletion();
     private static List<string> bodyNames = new List<string>()
     {
       "Bandit2Body",
@@ -35,7 +36,8 @@ namespace Hatify
       "FalseSonBody",
       "ChefBody",
       "TreebotBody",
-      "ToolbotBody"
+      "ToolbotBody",
+      "VoidRaidCrabBody"
     };
 
     public static ConfigEntry<float> commandoSize;
@@ -56,6 +58,7 @@ namespace Hatify
     public static ConfigEntry<float> chefSize;
     public static ConfigEntry<float> falseSonSize;
     public static ConfigEntry<float> multSize;
+    public static ConfigEntry<float> voidlingSize;
     private static ConfigFile HatifyConfig { get; set; }
 
     public void Awake()
@@ -79,293 +82,302 @@ namespace Hatify
       chefSize = HatifyConfig.Bind<float>("General", "CHEF Hat Size", 2f, "The scale of the hat.");
       falseSonSize = HatifyConfig.Bind<float>("General", "False Son Hat Size", 2.5f, "The scale of the hat.");
       multSize = HatifyConfig.Bind<float>("General", "MUL-T Hat Size", 15f, "The scale of the hat.");
+      voidlingSize = HatifyConfig.Bind<float>("General", "Fathomless Hat Size", 200f, "The scale of the hat.");
 
-      LoadAssets();
+      ApplyHats();
     }
 
-    private static void LoadAssets()
+    private static void ApplyHats()
     {
-      AssetReferenceT<Material> hatMatRef = new AssetReferenceT<Material>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Commando.matCommandoDualies_mat);
-      AssetAsyncReferenceManager<Material>.LoadAsset(hatMatRef).Completed += (x) => hatMat = x.Result;
+      hat.AddComponent<NetworkIdentity>();
+      SkinDef banditColossusSkin = Addressables.LoadAssetAsync<SkinDef>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_Base_Bandit2.skinBandit2AltColossus_asset).WaitForCompletion();
+      SkinDef chefSkin = Addressables.LoadAssetAsync<SkinDef>(RoR2BepInExPack.GameAssetPaths.Version_1_39_0.RoR2_DLC2_Chef.skinChefAlt_asset).WaitForCompletion();
 
-      AssetReferenceT<Material> banditHatMatRef = new AssetReferenceT<Material>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Bandit2.matBandit2AltColossus_mat);
-      AssetAsyncReferenceManager<Material>.LoadAsset(banditHatMatRef).Completed += (x) => banditHatMat = x.Result;
-
-      AssetReferenceT<GameObject> hatRef = new AssetReferenceT<GameObject>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Bandit2.mdlBandit2_fbx);
-      AssetAsyncReferenceManager<GameObject>.LoadAsset(hatRef).Completed += (x) =>
+      foreach (string bodyName in bodyNames)
       {
-        GameObject actualHat = x.Result.transform.GetChild(4).GetChild(2).GetChild(0).GetChild(6).GetChild(0).GetChild(2).GetChild(0).gameObject;
-        actualHat.AddComponent<NetworkIdentity>();
-        AssetReferenceT<SkinDef> skinDefRef = new AssetReferenceT<SkinDef>(RoR2BepInExPack.GameAssetPaths.RoR2_Base_Bandit2.skinBandit2AltColossus_asset);
-        SkinDef banditColossusSkin = AssetAsyncReferenceManager<SkinDef>.LoadAsset(skinDefRef).WaitForCompletion();
-        AssetReferenceT<SkinDef> skinDefRef2 = new AssetReferenceT<SkinDef>(RoR2BepInExPack.GameAssetPaths.RoR2_DLC2_Chef.skinChefAlt_asset);
-        SkinDef chefSkin = AssetAsyncReferenceManager<SkinDef>.LoadAsset(skinDefRef2).WaitForCompletion();
-
-        foreach (string bodyName in bodyNames)
+        Vector3 hatSize = Vector3.zero;
+        switch (bodyName)
         {
-          Vector3 hatSize = Vector3.zero;
-          switch (bodyName)
-          {
-            case "SeekerBody":
-              hatSize = new Vector3(seekerSize.Value, seekerSize.Value, seekerSize.Value);
-              if (hatSize != Vector3.zero)
+          case "SeekerBody":
+            hatSize = new Vector3(seekerSize.Value, seekerSize.Value, seekerSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItSeeker,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "FalseSonBody":
-              hatSize = new Vector3(falseSonSize.Value, falseSonSize.Value, falseSonSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItSeeker,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "FalseSonBody":
+            hatSize = new Vector3(falseSonSize.Value, falseSonSize.Value, falseSonSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItFalseSon,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "ChefBody":
-              hatSize = new Vector3(chefSize.Value, chefSize.Value, chefSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItFalseSon,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "ChefBody":
+            hatSize = new Vector3(chefSize.Value, chefSize.Value, chefSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItChef,
-                  skinDef = chefSkin
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "ToolbotBody":
-              hatSize = new Vector3(multSize.Value, multSize.Value, multSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItChef,
+                skinDef = chefSkin
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "ToolbotBody":
+            hatSize = new Vector3(multSize.Value, multSize.Value, multSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItMult,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "TreebotBody":
-              hatSize = new Vector3(rexSize.Value, rexSize.Value, rexSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItMult,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "TreebotBody":
+            hatSize = new Vector3(rexSize.Value, rexSize.Value, rexSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "FlowerBase",
-                  codeAfterApplying = PlaceItRex,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "Bandit2Body":
-              hatSize = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "FlowerBase",
+                codeAfterApplying = PlaceItRex,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "Bandit2Body":
+            hatSize = new Vector3(banditSize.Value, banditSize.Value, banditSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItBandit,
-                  skinDef = banditColossusSkin
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "CaptainBody":
-              hatSize = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItBandit,
+                skinDef = banditColossusSkin
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "CaptainBody":
+            hatSize = new Vector3(captainSize.Value, captainSize.Value, captainSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItCaptain,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "CommandoBody":
-              hatSize = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItCaptain,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "CommandoBody":
+            hatSize = new Vector3(commandoSize.Value, commandoSize.Value, commandoSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItCommando,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "RailgunnerBody":
-              hatSize = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItCommando,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "RailgunnerBody":
+            hatSize = new Vector3(railgunnerSize.Value, railgunnerSize.Value, railgunnerSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItRailgunner,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "MageBody":
-              hatSize = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItRailgunner,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "MageBody":
+            hatSize = new Vector3(artiSize.Value, artiSize.Value, artiSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItMage,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "HuntressBody":
-              hatSize = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItMage,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "HuntressBody":
+            hatSize = new Vector3(huntressSize.Value, huntressSize.Value, huntressSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItHuntress,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "CrocoBody":
-              hatSize = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItHuntress,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "CrocoBody":
+            hatSize = new Vector3(acridSize.Value, acridSize.Value, acridSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItCroco,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "EngiBody":
-              hatSize = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItCroco,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "EngiBody":
+            hatSize = new Vector3(engiSize.Value, engiSize.Value, engiSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Chest",
-                  codeAfterApplying = PlaceItEngi,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "EngiWalkerTurretBody":
-              hatSize = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Chest",
+                codeAfterApplying = PlaceItEngi,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "EngiWalkerTurretBody":
+            hatSize = new Vector3(engiWalkerTurretSize.Value, engiWalkerTurretSize.Value, engiWalkerTurretSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItEngiWalker,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "EngiTurretBody":
-              hatSize = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItEngiWalker,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "EngiTurretBody":
+            hatSize = new Vector3(engiTurretSize.Value, engiTurretSize.Value, engiTurretSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItEngiTurret,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "MercBody":
-              hatSize = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItEngiTurret,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "MercBody":
+            hatSize = new Vector3(mercSize.Value, mercSize.Value, mercSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItMerc,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "VoidSurvivorBody":
-              hatSize = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItMerc,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "VoidSurvivorBody":
+            hatSize = new Vector3(fiendSize.Value, fiendSize.Value, fiendSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItVoid,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            case "LoaderBody":
-              hatSize = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
-              if (hatSize != Vector3.zero)
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItVoid,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "LoaderBody":
+            hatSize = new Vector3(loaderSize.Value, loaderSize.Value, loaderSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
               {
-                ModelPartInfo modelPartInfo = new ModelPartInfo
-                {
-                  bodyName = bodyName,
-                  gameObject = actualHat,
-                  inputString = "Head",
-                  codeAfterApplying = PlaceItLoader,
-                };
-                new ModelPart(modelPartInfo);
-              }
-              break;
-            default:
-              break;
-          }
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItLoader,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
+          case "VoidRaidCrabBody":
+            hatSize = new Vector3(voidlingSize.Value, voidlingSize.Value, voidlingSize.Value);
+            if (hatSize != Vector3.zero)
+            {
+              ModelPartInfo modelPartInfo = new ModelPartInfo
+              {
+                bodyName = bodyName,
+                gameObject = hat,
+                inputString = "Head",
+                codeAfterApplying = PlaceItVoidling,
+              };
+              new ModelPart(modelPartInfo);
+            }
+            break;
         }
-      };
+      }
     }
+
+    static void PlaceItVoidling(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
+    {
+      modelObject.transform.localPosition = new Vector3(0f, 17f, -12f);
+      modelObject.transform.localScale = new Vector3(voidlingSize.Value, voidlingSize.Value, voidlingSize.Value);
+      modelObject.transform.localEulerAngles = new Vector3(10f, 0f, 0f);
+      modelObject.transform.GetChild(0).GetComponent<MeshRenderer>().material = voidlingHatMat;
+    }
+
     static void PlaceItMult(GameObject modelObject, ChildLocator childLocator, CharacterModel characterModel, ActivePartsComponent activePartsComponent)
     {
       modelObject.transform.localPosition = new Vector3(0f, 1.5f, 1.7f);
